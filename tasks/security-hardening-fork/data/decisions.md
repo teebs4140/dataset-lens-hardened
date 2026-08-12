@@ -174,7 +174,7 @@ input is realistic) and rendered → raw tag absent, escaped form present.
 **Package hygiene:** `dataset-lens-secure-2.6.0.vsix`, 183 files, 1.76 MB. Contains no
 `tasks/`, `testing/`, `data/`, `.claude/`, or `__pycache__` entries, and no VirtualScrolling or
 `webview/` files. SHA-256
-`8b7c1187d7ab17b7eea87b60591d0ffea0bb04ef60cb805878117c46f3480ea7`.
+`e53b8363893a2ec10c8a3c78fadae293d2b76e93b34b4ff8cd71f647c94f604e`.
 
 ### Not verified (honest gaps)
 - **No interactive VS Code run.** Everything above exercises the Python readers and the HTML
@@ -217,3 +217,19 @@ the user's explicit choice. Flagged rather than silently decided.
 between a clean rebuild and the committed `out/` is empty. Anyone can therefore repeat Dylan's
 original audit against this fork, which is the whole basis for asking colleagues to trust it.
 **Status:** Verified.
+
+### D16 — CSP nonce added (completing spec Phase A step 3)
+**Decision:** `script-src` is now `'nonce-<per-render-random>'` instead of `'unsafe-inline'`.
+**Why:** The first pass only dropped `unsafe-eval`, leaving the spec's nonce step undone. Without
+it, escaping is the *only* thing standing between a crafted file and script execution. With it,
+injected script fails to run even if a sink was missed — the two defenses are independent, which
+is the point.
+**Safety check before applying:** nonce-based CSP blocks inline event handlers, which
+`unsafe-inline` permitted. `grep -cE 'on(click|change|input|load|error|submit|keyup|keydown|mouseover)='`
+over `PaginationWebview.ts` returns **0** — the live template wires everything through
+`addEventListener`, so nothing breaks. (The deleted dead file *did* contain an inline `onclick`,
+one more reason removing it was correct.)
+**Evidence:** nonce present in CSP and on the `<script>` tag, differs between two renders of the
+same metadata, `unsafe-inline`/`unsafe-eval` both absent. Full canary suite re-run after the
+change: all pass; `out/` still reproduces from `src/`.
+**Status:** Implemented and verified.

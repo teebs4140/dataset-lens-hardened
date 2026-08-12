@@ -52,7 +52,7 @@ sha256sum dataset-lens-secure-2.6.0.vsix
 ```
 
 **Current build:** `dataset-lens-secure-2.6.0.vsix`
-SHA-256: `8b7c1187d7ab17b7eea87b60591d0ffea0bb04ef60cb805878117c46f3480ea7`
+SHA-256: `e53b8363893a2ec10c8a3c78fadae293d2b76e93b34b4ff8cd71f647c94f604e`
 
 (That hash is for the build produced in this working tree. Re-hash after any rebuild —
 VSIX files embed timestamps, so a rebuild will not reproduce the same hash byte-for-byte.)

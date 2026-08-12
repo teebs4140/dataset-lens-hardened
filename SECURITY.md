@@ -21,7 +21,8 @@ data file is treated as untrusted input**. Specifically:
   They are escaped before being rendered in the viewer.
 - Cell values are rendered as text, never as markup.
 - The webview runs under `default-src 'none'`, so it cannot make network requests even if
-  content injection were achieved.
+  content injection were achieved, and `script-src` is bound to a per-render nonce, so injected
+  script cannot execute even if an escaping gap were found.
 
 The extension performs **no network communication** and collects **no telemetry**. The only
 outbound traffic is `pip` installing `pandas`, `numpy`, `pyreadstat` and `pyreadr` from PyPI

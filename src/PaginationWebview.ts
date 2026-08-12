@@ -1,3 +1,5 @@
+import { randomBytes } from 'crypto';
+
 /**
  * Escape a value for interpolation into HTML text or an attribute.
  * Dataset metadata (variable names, labels, formats, dataset labels) is
@@ -57,6 +59,11 @@ function getVariableIconString(variable: any): string {
 export function getPaginationHTML(metadata: any): string {
     const fileName = metadata.file_path.split(/[\\/]/).pop();
 
+    // Per-render nonce. With script-src bound to it, markup injected through any
+    // sink we missed still cannot execute: an attacker cannot guess the nonce.
+    // This backstops the escaping rather than replacing it.
+    const nonce = randomBytes(16).toString('base64');
+
     // Debug: Log metadata to see what we have
     console.log('[PaginationWebview] Metadata received:', {
         dataset_label: metadata.dataset_label,
@@ -70,7 +77,7 @@ export function getPaginationHTML(metadata: any): string {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-${nonce}';">
         <title>${esc(fileName)} - Dataset Lens</title>
         <style>
             body {
@@ -965,7 +972,7 @@ export function getPaginationHTML(metadata: any): string {
             </div>
         </div>
 
-        <script>
+        <script nonce="${nonce}">
             // Helper function to get variable icons
             // Dataset metadata and cell values come from the opened file and are
             // untrusted; escape before any innerHTML assignment.

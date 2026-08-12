@@ -44,7 +44,11 @@ The main data grid already used `textContent` and was never affected.
 
 ### Changed — Content Security Policy tightened
 
-Dropped `unsafe-eval` from the webview CSP. Nothing in the live rendering path required it.
+Dropped `unsafe-eval` from the webview CSP, and replaced `script-src 'unsafe-inline'` with a
+**per-render nonce**. The panel's single inline script carries the nonce; anything injected into
+the page does not, so script introduced through a sink that was missed cannot execute at all.
+This backstops the escaping above rather than replacing it. The template uses `addEventListener`
+throughout and contains no inline event handlers, so nothing in the UI depends on `unsafe-inline`.
 `default-src 'none'` is retained, so the panel still cannot reach the network.
 
 ### Removed — unreachable code carrying `eval`
