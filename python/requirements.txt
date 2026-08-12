@@ -1,4 +1,12 @@
-pandas>=1.5.0
-pyreadstat>=1.2.0
-numpy>=1.21.0
-pyreadr>=0.5.0
+# Bounded version ranges rather than open-ended floors.
+#
+# The upstream file used ">=" floors only, which today resolves pandas to 3.x —
+# a major version this code has never been tested against, silently picked up on
+# any fresh install. Upper bounds keep the auto-provisioned venv on a tested
+# major line while still allowing patch and minor security updates.
+#
+# Bump deliberately, after re-running the reader tests against the new major.
+pandas>=2.0.0,<3.0.0
+numpy>=1.21.0,<3.0.0
+pyreadstat>=1.2.0,<2.0.0
+pyreadr>=0.5.0,<0.6.0

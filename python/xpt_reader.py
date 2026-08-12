@@ -105,13 +105,14 @@ def get_data(file_path, start_row, num_rows, selected_vars='', where_clause=''):
         else:
             df = pd.read_sas(file_path, format='xport')
 
-        # Apply WHERE clause filter if provided
+        # Apply WHERE clause filter if provided. A failed filter is reported as an
+        # error rather than silently returning unfiltered rows, which would look
+        # identical to a filter that matched everything.
         if where_clause:
             try:
-                # Simple WHERE clause parsing
                 df = apply_where_clause(df, where_clause)
             except Exception as e:
-                print(f"Warning: WHERE clause filtering failed: {e}", file=sys.stderr)
+                return {'error': str(e)}
 
         filtered_rows = len(df)
 
@@ -158,17 +159,20 @@ def apply_where_clause(df, where_clause):
     if clause.upper().startswith('WHERE '):
         clause = clause[6:].strip()
 
-    # Simple parsing for basic conditions
-    # This is a basic implementation - can be enhanced
-    try:
-        # Replace = with == for pandas query
-        clause = clause.replace(' = ', ' == ')
+    # Replace = with == for pandas query
+    clause = clause.replace(' = ', ' == ')
 
-        # Use pandas query method
+    # pandas.query() is the only supported evaluator. Expressions it cannot parse
+    # are rejected rather than passed to eval(), which would execute arbitrary
+    # Python with the user's privileges. Matches sas_reader.py and r_reader.py.
+    try:
         return df.query(clause)
-    except:
-        # If query fails, try eval (less safe but more flexible)
-        return df[eval(clause)]
+    except Exception as e:
+        raise ValueError(
+            f'Unsupported WHERE expression: {where_clause!r}. '
+            f'Use comparisons and AND/OR over column names '
+            f'(e.g. AGE > 30 AND SEX == "F"). Details: {e}'
+        )
 
 
 def main():

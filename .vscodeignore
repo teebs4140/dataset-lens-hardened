@@ -29,3 +29,9 @@ node_modules/typescript/**
 node_modules/.bin/**
 node_modules/.cache/**
 # Don't exclude js-stream-sas7bdat - we need it!
+
+# Fork additions: never ship planning docs, caches, or the audit workspace
+tasks/**
+python/__pycache__/**
+**/__pycache__/**
+*.pyc

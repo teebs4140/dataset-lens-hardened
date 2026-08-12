@@ -1,6 +1,25 @@
-# Dataset Lens for VS Code
+# Dataset Lens for VS Code — Hardened Fork
 
-![Version](https://img.shields.io/badge/version-2.3.1-blue)
+> **This is a security-hardened fork** of [Dataset Lens](https://github.com/vikasgaddu1/dataset-lens)
+> by Vikas Gaddu, forked from upstream v2.5.0. All original credit belongs to the upstream author.
+>
+> An audit of upstream 2.5.0 found **no malware, no telemetry, and no network activity**, and
+> confirmed the Marketplace build is byte-identical to its published source. It did find ordinary
+> security defects, which this fork fixes:
+>
+> - **Arbitrary code execution** through the WHERE-clause filter on XPT files (`eval` fallback) — removed.
+> - **HTML/script injection** from untrusted dataset metadata (variable names, labels, cell values) — escaped.
+> - A failed filter silently returned **unfiltered** data — now reported as an error.
+> - CSP tightened, unreachable `eval`-bearing code deleted, Python dependency versions bounded.
+>
+> See [`CHANGELOG.md`](CHANGELOG.md) for details, [`NOTICE.md`](NOTICE.md) for attribution, and
+> [`SECURITY.md`](SECURITY.md) for the threat model and how to verify your download.
+>
+> **Treat data files from outside your organisation as untrusted input** — that is the threat this
+> fork is hardened against.
+
+
+![Version](https://img.shields.io/badge/version-2.6.0-blue)
 ![VS Code](https://img.shields.io/badge/VS%20Code-^1.74.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -8,9 +27,18 @@ A powerful VS Code extension for viewing and analyzing SAS7BDAT, XPT (XPORT), CD
 
 ## 📥 Installation
 
-Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=elearnsas.dataset-lens)
+Install the `.vsix` your administrator distributed:
 
-Or search for "Dataset Lens" in VS Code Extensions panel (Ctrl+Shift+X / Cmd+Shift+X)
+```
+code --install-extension dataset-lens-secure-<version>.vsix
+```
+
+Or in VS Code: Extensions panel -> `...` menu -> **Install from VSIX...**
+
+Verify the file first with `sha256sum` against the hash published alongside the release.
+
+The upstream (unforked) extension remains available on the
+[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=elearnsas.dataset-lens).
 
 ## ✨ Features
 

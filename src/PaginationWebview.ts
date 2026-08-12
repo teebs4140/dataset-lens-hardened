@@ -1,3 +1,38 @@
+/**
+ * Escape a value for interpolation into HTML text or an attribute.
+ * Dataset metadata (variable names, labels, formats, dataset labels) is
+ * attacker-controllable content read out of the data file, so it must never
+ * reach the page unescaped.
+ */
+function esc(value: any): string {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
+ * Serialize a value for embedding inside a <script> block. Plain JSON.stringify
+ * is unsafe here: a "</script>" sequence inside any string would close the
+ * script element and let the remainder of the value run as markup. Escaping the
+ * angle brackets and ampersand keeps the payload valid JSON while making that
+ * breakout impossible. U+2028/U+2029 are escaped because they are literal line
+ * terminators in JavaScript source.
+ */
+function jsonForScript(value: any): string {
+    return JSON.stringify(value)
+        .replace(/&/g, '\\u0026')
+        .replace(/</g, '\\u003c')
+        .replace(/>/g, '\\u003e')
+        .replace(/\u2028/g, '\\u2028')
+        .replace(/\u2029/g, '\\u2029');
+}
+
 // Helper function for variable icons in HTML generation
 function getVariableIconString(variable: any): string {
     if (variable.type === 'character') {
@@ -35,8 +70,8 @@ export function getPaginationHTML(metadata: any): string {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline' 'unsafe-eval';">
-        <title>${fileName} - Dataset Lens</title>
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+        <title>${esc(fileName)} - Dataset Lens</title>
         <style>
             body {
                 font-family: var(--vscode-font-family);
@@ -812,49 +847,49 @@ export function getPaginationHTML(metadata: any): string {
                         <table class="metadata-table">
                             <tr>
                                 <td>Filename:</td>
-                                <td>${fileName}</td>
+                                <td>${esc(fileName)}</td>
                             </tr>
                             ${metadata.dataset_label && metadata.dataset_label !== fileName ? `
                             <tr>
                                 <td>Dataset Label:</td>
-                                <td>${metadata.dataset_label}</td>
+                                <td>${esc(metadata.dataset_label)}</td>
                             </tr>` : ''}
                             <tr>
                                 <td>Total Rows:</td>
-                                <td id="dataset-total-rows">${metadata.total_rows.toLocaleString()}</td>
+                                <td id="dataset-total-rows">${esc(metadata.total_rows.toLocaleString())}</td>
                             </tr>
                             <tr>
                                 <td>Total Variables:</td>
-                                <td>${metadata.total_variables}</td>
+                                <td>${esc(metadata.total_variables)}</td>
                             </tr>
                             <tr>
                                 <td>File Path:</td>
-                                <td style="word-break: break-all; font-family: monospace; font-size: 11px;">${metadata.file_path}</td>
+                                <td style="word-break: break-all; font-family: monospace; font-size: 11px;">${esc(metadata.file_path)}</td>
                             </tr>
                             ${metadata.created_date ? `
                             <tr>
                                 <td>Created Date:</td>
-                                <td>${metadata.created_date}</td>
+                                <td>${esc(metadata.created_date)}</td>
                             </tr>` : ''}
                             ${metadata.modified_date ? `
                             <tr>
                                 <td>Modified Date:</td>
-                                <td>${metadata.modified_date}</td>
+                                <td>${esc(metadata.modified_date)}</td>
                             </tr>` : ''}
                             ${metadata.sas_version ? `
                             <tr>
                                 <td>SAS Version:</td>
-                                <td>${metadata.sas_version}</td>
+                                <td>${esc(metadata.sas_version)}</td>
                             </tr>` : ''}
                             ${metadata.os_version ? `
                             <tr>
                                 <td>OS Version:</td>
-                                <td>${metadata.os_version}</td>
+                                <td>${esc(metadata.os_version)}</td>
                             </tr>` : ''}
                             ${metadata.encoding ? `
                             <tr>
                                 <td>Encoding:</td>
-                                <td>${metadata.encoding}</td>
+                                <td>${esc(metadata.encoding)}</td>
                             </tr>` : ''}
                         </table>
                     </div>
@@ -871,7 +906,7 @@ export function getPaginationHTML(metadata: any): string {
                 </div>
                 <div class="modal-body">
                     <div class="metadata-section">
-                        <h3>Variables Details (${metadata.total_variables} total)</h3>
+                        <h3>Variables Details (${esc(metadata.total_variables)} total)</h3>
                         <div style="overflow-x: auto;">
                             <table class="metadata-table" style="width: 100%; border-collapse: collapse;">
                                 <thead>
@@ -887,12 +922,12 @@ export function getPaginationHTML(metadata: any): string {
                                     ${metadata.variables.map((v: any) => `
                                     <tr>
                                         <td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">
-                                            ${v.type === 'character' ? '📝' : '🔢'} ${v.name}
+                                            ${v.type === 'character' ? '📝' : '🔢'} ${esc(v.name)}
                                         </td>
-                                        <td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">${v.label || '-'}</td>
-                                        <td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">${v.type}</td>
-                                        <td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">${v.format || '-'}</td>
-                                        <td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">${v.length || '-'}</td>
+                                        <td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">${esc(v.label) || '-'}</td>
+                                        <td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">${esc(v.type)}</td>
+                                        <td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">${esc(v.format) || '-'}</td>
+                                        <td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">${esc(v.length) || '-'}</td>
                                     </tr>`).join('')}
                                 </tbody>
                             </table>
@@ -932,6 +967,18 @@ export function getPaginationHTML(metadata: any): string {
 
         <script>
             // Helper function to get variable icons
+            // Dataset metadata and cell values come from the opened file and are
+            // untrusted; escape before any innerHTML assignment.
+            function escapeHtml(value) {
+                if (value === null || value === undefined) { return ''; }
+                return String(value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
             function getVariableIcon(variable) {
                 if (variable.type === 'character') {
                     return '📝';
@@ -953,9 +1000,9 @@ export function getPaginationHTML(metadata: any): string {
             }
             // Debug metadata
             console.log('Metadata in webview:', {
-                dataset_label: '${metadata.dataset_label}',
-                fileName: '${fileName}',
-                labelCondition: ${metadata.dataset_label && metadata.dataset_label.trim() && metadata.dataset_label !== fileName}
+                dataset_label: ${jsonForScript(metadata.dataset_label ?? '')},
+                fileName: ${jsonForScript(fileName ?? '')},
+                labelCondition: ${Boolean(metadata.dataset_label && String(metadata.dataset_label).trim() && metadata.dataset_label !== fileName)}
             });
 
             // Acquire VS Code API
@@ -964,13 +1011,13 @@ export function getPaginationHTML(metadata: any): string {
             // Pagination state
             let currentPage = 1;
             let pageSize = 100;
-            let totalRows = ${metadata.total_rows};
+            let totalRows = ${esc(metadata.total_rows)};
             let filteredRows = totalRows; // Total rows after filtering
             let totalPages = Math.ceil(filteredRows / pageSize);
             let currentData = [];
             let columns = [];
             let selectedColumns = [];
-            let allVariables = ${JSON.stringify(metadata.variables)};
+            let allVariables = ${jsonForScript(metadata.variables)};
             let displayMode = 'name';
             let isLoading = false;
             let currentWhereClause = '';
@@ -1078,7 +1125,7 @@ export function getPaginationHTML(metadata: any): string {
                     }
                     
                     span.setAttribute('data-tooltip', tooltip);
-                    span.innerHTML = getVariableIcon(variable) + ' ' + variable.name;
+                    span.innerHTML = getVariableIcon(variable) + ' ' + escapeHtml(variable.name);
                     
                     item.appendChild(checkbox);
                     item.appendChild(span);
@@ -1839,7 +1886,7 @@ export function getPaginationHTML(metadata: any): string {
                     // Create header
                     let headerHtml = '<thead><tr style="background: var(--vscode-editor-lineHighlightBackground);">';
                     variables.forEach(v => {
-                        headerHtml += '<th style="text-align: left; padding: 8px; border-bottom: 2px solid var(--vscode-panel-border);">' + v + '</th>';
+                        headerHtml += '<th style="text-align: left; padding: 8px; border-bottom: 2px solid var(--vscode-panel-border);">' + escapeHtml(v) + '</th>';
                     });
                     headerHtml += '<th style="text-align: left; padding: 8px; border-bottom: 2px solid var(--vscode-panel-border);">Count</th></tr></thead>';
 
@@ -1848,14 +1895,14 @@ export function getPaginationHTML(metadata: any): string {
                     values.forEach(row => {
                         bodyHtml += '<tr>';
                         if (variables.length === 1) {
-                            bodyHtml += '<td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">' + (row.value != null ? row.value : '(null)') + '</td>';
+                            bodyHtml += '<td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">' + (row.value != null ? escapeHtml(row.value) : '(null)') + '</td>';
                         } else {
                             variables.forEach(v => {
                                 const val = row.combination[v];
-                                bodyHtml += '<td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">' + (val != null ? val : '(null)') + '</td>';
+                                bodyHtml += '<td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">' + (val != null ? escapeHtml(val) : '(null)') + '</td>';
                             });
                         }
-                        bodyHtml += '<td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">' + row.count + '</td>';
+                        bodyHtml += '<td style="padding: 8px; border-bottom: 1px solid var(--vscode-panel-border);">' + escapeHtml(row.count) + '</td>';
                         bodyHtml += '</tr>';
                     });
                     bodyHtml += '</tbody>';
@@ -1884,14 +1931,17 @@ export function getPaginationHTML(metadata: any): string {
                         const icon = getVariableIcon(variable);
                         let newText;
                         
+                        const safeName = escapeHtml(name);
+                        const safeLabel = escapeHtml(label);
+
                         if (displayMode === 'name') {
-                            newText = icon + ' ' + name;
+                            newText = icon + ' ' + safeName;
                         } else if (displayMode === 'label' && label) {
-                            newText = icon + ' ' + label;
+                            newText = icon + ' ' + safeLabel;
                         } else if (displayMode === 'both' && label && label !== name) {
-                            newText = icon + ' ' + name + ' (' + label + ')';
+                            newText = icon + ' ' + safeName + ' (' + safeLabel + ')';
                         } else {
-                            newText = icon + ' ' + name;
+                            newText = icon + ' ' + safeName;
                         }
                         
                         span.innerHTML = newText;
