@@ -139,6 +139,11 @@
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging for the Dataset Lens extension"
+        },
+        "sasDataExplorer.pythonPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a Python 3.9+ executable used to create the extension's private environment. Leave empty to detect automatically (newest interpreter first). Only needed for XPT v8/v9 and R data files; .sas7bdat and XPT v5 do not use Python."
         }
       }
     }

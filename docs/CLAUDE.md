@@ -1,177 +1,122 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code (claude.ai/code) when working in this repository.
 
-## Build and Development Commands
+**This is a security-hardened fork** of [vikasgaddu1/dataset-lens](https://github.com/vikasgaddu1/dataset-lens).
+Read `NOTICE.md` for the relationship to upstream, `CHANGELOG.md` for what changed, and
+`SECURITY.md` for the threat model before changing parsing or rendering code.
 
-### Python Setup
+## Build and test
+
 ```bash
-# Install Python dependencies (Windows)
-py -m pip install -r python/requirements.txt
-# Or install individually
-py -m pip install pandas pyreadstat numpy
+npm install          # dependencies
+npm run compile      # tsc -p ./   (output goes to out/, which is committed)
+npm run watch        # watch mode
+npx vsce package     # build the .vsix
 ```
 
-### Node.js Setup
+`out/` is committed and must stay reproducible from `src/`: a clean `npx tsc -p ./` followed by
+`diff -r` against `out/` should be empty. That property is what lets anyone verify the published
+package matches the source, so do not hand-edit anything in `out/`.
+
+Test the Python readers directly (they are plain CLIs):
+
 ```bash
-# Node.js is properly installed and available in system PATH
-# Verify with:
-node --version
-npm --version
+python python/sas_reader.py metadata <file.sas7bdat>
+python python/xpt_reader.py  data     <file.xpt> 0 100 "" "AGE > 30"
+python python/r_reader.py    metadata <file.rds>
 ```
 
-### TypeScript Compilation
-```bash
-# Standard commands
-npm install          # Install dependencies
-npm run compile      # One-time compilation
-npm run watch        # Watch mode for development
-```
+Press F5 in VS Code to launch an Extension Development Host.
 
-### Extension Publishing
+## Publishing
 
 **This is a fork.** Upstream's publishing instructions (publisher `elearnsas`, a PAT in a local
-`.env`, and an Azure DevOps org belonging to the original author) were removed from this file
-because following them from this repository would attempt to publish under someone else's
-publisher identity.
+`.env`, an Azure DevOps org belonging to the original author) were removed, because following them
+from this repository would publish under someone else's identity.
 
-Do not publish from an automated session. Release steps for this fork are maintainer-only and are
-kept outside this repository. Agents working here should build and test (`npm run compile`,
-`npx vsce package`) but never run `vsce publish`, never create publisher accounts, and never write
-a Personal Access Token into any file in this repo.
+Do not publish from an automated session. Build and test freely, but never run `vsce publish`,
+never create publisher accounts, and never write a Personal Access Token into any file here.
+Release steps are maintainer-only and kept outside this repository.
 
-See `NOTICE.md` for the fork's relationship to upstream and `SECURITY.md` for the threat model.
+## Architecture
 
-### Testing
-```bash
-# Test Python backend directly
-py python/sas_reader.py metadata "path/to/test.sas7bdat"
-py python/sas_reader.py data "path/to/test.sas7bdat" 0 100
-py test_python.py
+TypeScript-first with a Python fallback, and a single webview renderer.
 
-# Sample test datasets location
-# C:\sas\Test_Ext\*.sas7bdat
+### Which reader handles which file
 
-# VS Code Extension Testing
-# Press F5 in VS Code to launch Extension Development Host
-```
+This is the detail that matters most when changing reader code:
 
-## Architecture Overview
+| Format | Reader | Python needed? |
+|---|---|---|
+| `.sas7bdat` | `src/readers/EnhancedSASReader.ts` (js-stream-sas7bdat), Python only on failure | No |
+| `.xpt` v5/v6 | `src/readers/XPTReader.ts` (xport-js) | No |
+| `.xpt` v8/v9 | `python/xpt_reader.py` (pyreadstat) | **Yes** |
+| `.rds`, `.rdata`, `.rda` | `python/r_reader.py` (pyreadr) | **Yes** |
+| Dataset-JSON `.json` | `src/DatasetJsonProvider.ts` | No |
 
-This VS Code extension enables viewing and filtering SAS7BDAT dataset files. The architecture uses a **TypeScript-first approach with Python fallback** and multiple rendering strategies.
+### Components
 
-**Version 2.0.0 Features:**
-- TypeScript-based SAS reader using js-stream-sas7bdat (600-700x faster)
-- Enhanced WHERE clause filtering with AND/OR support
-- Unique values extraction for categorical variables
-- Multi-column unique combinations (NODUPKEY equivalent)
-- Automatic Python fallback for edge cases
+**Extension layer**
+- `src/extension.ts` — entry point; registers five custom editors and the `sasDataExplorer.*` commands.
+- `src/SasDataProvider.ts`, `XptDataProvider.ts`, `RDataProvider.ts`, `DatasetJsonProvider.ts` —
+  one `CustomReadonlyEditorProvider` per format; own document lifecycle and reader selection.
+- `src/WebviewPanel.ts` — the single `SASWebviewPanel`; message routing, CSV export, and the only
+  place that sets `webview.html`.
 
-### Core Components
+**Renderer**
+- `src/PaginationWebview.ts` — the *only* renderer. Every editor goes through
+  `getPaginationHTML()`. Pagination at 50/100/200/500 rows per page.
+- The virtual-scrolling renderers were deleted in this fork: they were exported but never imported,
+  and carried their own `eval()` and a weaker CSP. Do not reintroduce that pattern.
 
-**1. Extension Layer (TypeScript)**
-- `src/extension.ts` - Entry point, registers custom editor provider for `.sas7bdat` files
-- `src/SasDataProvider.ts` - Implements `vscode.CustomReadonlyEditorProvider`, manages document lifecycle and Python subprocess communication
-- `src/WebviewPanel.ts` - Central webview management, message routing, and rendering strategy selection
+**Python backend** — `python/{sas_reader,xpt_reader,r_reader}.py`. CLI scripts taking
+`<command> <file> [args...]` and printing a single JSON object to stdout. Errors are returned as
+`{"error": "..."}`, which the TypeScript side surfaces to the user.
 
-**2. TypeScript Reader (`src/readers/EnhancedSASReader.ts`)**
-- Uses `js-stream-sas7bdat` library for native SAS7BDAT file reading
-- Provides enhanced functionality:
-  - Fixed getUniqueValues implementation
-  - Multi-column unique combinations
-  - Improved WHERE clause parsing with AND/OR support
-  - Case-insensitive string comparisons
-  - Result caching for performance
+**Python environment** — `src/utils/pythonEnvironment.ts` creates a private venv under
+`globalStorageUri` on first use of a Python-backed format. It probes every interpreter on the
+machine (the `sasDataExplorer.pythonPath` setting first, then `python.defaultInterpreterPath`, then
+version-suffixed names newest-first), and installs wheels-only before allowing source builds. Never
+call `spawn` with `shell: true` here — arguments would be concatenated unquoted, which breaks paths
+containing spaces and any argument containing spaces.
 
-**3. Python Backend (`python/sas_reader.py`)** - Fallback only
-- Uses `pyreadstat` library for edge cases
-- Provides CLI interface with metadata and data commands
-- Supports WHERE clause filtering at pandas level
-- Returns JSON responses with data arrays and metadata
+### Data flow
 
-**4. Rendering Strategies**
-The extension currently supports three rendering approaches (controlled by `WebviewPanel.ts`):
+1. VS Code matches the file pattern and activates the custom editor.
+2. The document loads metadata via its reader (TypeScript, falling back to Python).
+3. `SASWebviewPanel` sets `webview.html` from `getPaginationHTML(metadata)`.
+4. The webview posts `webviewReady`; the panel then sends the first page.
+5. Messages webview → extension: `webviewReady`, `loadData`, `applyFilter`, `updateFilter`,
+   `applyWhereClause`, `getUniqueValues`, `toggleVariable`, `reorderVariables`, `searchVariables`,
+   `exportCsv`.
+6. Messages extension → webview: `initialData`, `dataChunk`, `filterResult`, `exportCsvDone`,
+   `exportCsvError`, `error`.
 
-- **PaginationWebview.ts** (Current/Recommended) - Reliable pagination with 50/100/200/500 rows per page
-- **VirtualScrollingWebviewComplete.ts** - Virtual scrolling for large datasets (has reliability issues beyond row 172)
-- **VirtualScrollingWebview.ts** - Legacy virtual scrolling implementation
+**Message handler order matters**: set webview options → attach the message handler → set HTML →
+wait for `webviewReady` → send data. Attaching the handler after setting HTML drops the ready signal.
 
-### Data Flow Architecture
+## Security invariants
 
-1. **File Opening**: VS Code detects `.sas7bdat` → triggers custom editor via extension registration
-2. **Metadata Loading**: `SASDatasetDocument.openDocument()` uses TypeScript reader (falls back to Python if needed)
-3. **Webview Creation**: `SASWebviewPanel` creates webview with selected rendering strategy
-4. **Initial Data Load**:
-   - Pagination mode: Loads first page (100 rows by default)
-   - Virtual scrolling: Loads up to 1000 rows initially
-5. **Message Communication**:
-   - Webview → Extension: `loadData`, `applyFilter`, `webviewReady`
-   - Extension → Webview: `initialData`, `dataChunk`, `filterResult`, `error`
-6. **Data Updates**: User interactions trigger Python subprocess calls for new data
+Changing any of these reopens a fixed vulnerability. They are the reason this fork exists.
 
-### Critical Implementation Details
+1. **No `eval`.** WHERE clauses are evaluated by `pandas.query()` only. Expressions it cannot parse
+   are rejected, never passed to `eval`. There must be no `eval(` anywhere in `src/`, `out/`, or
+   `python/`.
+2. **Dataset metadata is untrusted.** Variable names, labels, formats, dataset labels, file paths
+   and cell values come from the file and may be hostile. In `PaginationWebview.ts`, use `esc()` for
+   HTML context and `jsonForScript()` for anything embedded in `<script>`; client-side, use
+   `escapeHtml()` before any `innerHTML`. Prefer `textContent` where no markup is needed.
+3. **CSP.** `default-src 'none'`, and `script-src` bound to a per-render nonce. Do not add
+   `unsafe-inline` or `unsafe-eval`, and do not add inline event handlers (`onclick=`) — they cannot
+   execute under a nonce. Use `addEventListener`.
+4. **A failed filter must be an error**, never a silent return of unfiltered rows. Showing every row
+   to someone who believes they are looking at a filtered subset is a data-integrity bug.
+5. **Serialize defensively in Python.** `json.dumps` cannot encode `datetime.date`; normalise values
+   as the readers do (`isoformat()`, `str()`, decode bytes, `.item()` for numpy scalars).
 
-**Message Handler Setup Sequence** (Must follow this order):
-1. Set webview options (`enableScripts: true`)
-2. Attach message handler in constructor
-3. Set HTML content
-4. Wait for `webviewReady` signal
-5. Send initial data
+## Data loading
 
-**Python Process Management**:
-- Each data request spawns new Python subprocess
-- Uses `spawn('py', args)` on Windows (not `python` or `python3`)
-- Full file paths required for Windows compatibility
-- JSON parsing of stdout, error handling via stderr
-
-**Webview State Management**:
-- `FilterState` maintains selected variables, WHERE clause, and column order
-- Client-side filtering for responsive UI (pagination mode)
-- Server-side filtering for large datasets (virtual scrolling)
-
-**Known Issues with Virtual Scrolling**:
-- Data stops displaying beyond row 172 (debugging logs added)
-- Chunk loading timeout issues partially resolved with retry logic
-- Fallback to pagination mode recommended for reliability
-
-## Windows-Specific Requirements
-
-- Python command: `py` (not `python` or `python3`)
-- Node.js: Available in PATH as `node` and `npm` commands
-- File paths: Use backslashes or properly escape forward slashes
-
-## Current Implementation Status
-
-### Working Features
-- ✅ Pagination interface with reliable data display
-- ✅ WHERE clause filtering (SAS-style syntax)
-- ✅ Variable selection and display mode toggling
-- ✅ Metadata tooltips and variable information
-- ✅ Professional sidebar layout
-
-### Issues Being Debugged
-- ⚠️ Virtual scrolling stops at row 172 (extensive debugging added)
-- ⚠️ Chunk loading timeouts in virtual scrolling mode
-- ⚠️ DOM element validation issues in virtual scroller
-
-### Recent Changes
-- Added pagination mode as default (more reliable than virtual scrolling)
-- Extensive debugging logs added to trace virtual scrolling issues
-- Fallback DOM creation for missing elements
-- Enhanced data validation for loaded rows
-
-## Data Loading Strategies
-
-**Small Datasets (< 1000 rows)**:
-- Load all data initially
-- Client-side filtering and pagination
-
-**Large Datasets (≥ 1000 rows)**:
-- Pagination: Load 100 rows per page request
-- Virtual Scrolling: Load 1000 rows initially, then 100-row chunks on scroll
-- WHERE filtering applied at pandas level for efficiency
-
-**Buffer Zones** (Virtual Scrolling):
-- Pre-load 5-20 rows above/below visible range
-- Double buffer at end for smoother scrolling
-- Retry mechanism with exponential backoff for failed chunks
+- Small datasets (< 1000 rows): loaded in full, filtered client-side.
+- Larger: one page per request; WHERE filtering applied in pandas/TypeScript before paging.
+- `FilterState` tracks selected variables, the WHERE clause, and column order.

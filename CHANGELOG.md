@@ -26,6 +26,28 @@ When a WHERE clause failed, `xpt_reader.py` logged a warning to stderr and retur
 matched every row — a dangerous failure mode when reviewing clinical data. Filter failures
 are now surfaced to the user as errors.
 
+### Fixed — Python environment setup failed depending on which `python3` was first on PATH
+
+`pythonEnvironment.ts` created its venv with the first interpreter named `python3`, then ran a plain
+`pip install -r requirements.txt`. On a machine whose `python3` is older than the wheels published
+for the newest `pyreadstat`, pip selected the newest version anyway, fell back to compiling it from
+source, and the whole setup failed — even though a newer interpreter was installed alongside. The
+user's only recourse was to reorder their PATH.
+
+Setup now:
+
+- considers every interpreter it can find — the new `sasDataExplorer.pythonPath` setting first, then
+  the Python extension's `python.defaultInterpreterPath`, then version-suffixed names newest-first,
+  then bare `python3`/`python` — and requires 3.9+;
+- installs with `--only-binary=:all:` on the first pass, so pip picks a version with a prebuilt
+  wheel instead of attempting a source build, retrying with source builds allowed only if every
+  interpreter fails that way;
+- moves to the next interpreter when one fails, instead of giving up;
+- reports every interpreter it tried, and points at the setting, if none work.
+
+Also stopped passing `shell: true` to `spawn`, which concatenated arguments without quoting — that
+broke any path containing spaces and mangled arguments containing spaces or semicolons.
+
 ### Fixed — XPT data view crashed on any date variable
 
 `python/xpt_reader.py` serialized rows with `json.dumps` without normalising values it cannot

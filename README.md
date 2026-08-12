@@ -27,6 +27,8 @@ A powerful VS Code extension for viewing and analyzing SAS7BDAT, XPT (XPORT), CD
 
 ## 📥 Installation
 
+**New here? See [INSTALL.md](INSTALL.md) for step-by-step instructions.**
+
 Install the `.vsix` your administrator distributed:
 
 ```
