@@ -22,8 +22,9 @@ changes a small number of security-relevant lines and nothing else of substance.
 The upstream extension was audited before internal use. The audit found **no malware,
 no telemetry, and no network activity**, and confirmed that the code published to the
 Marketplace is byte-identical to the code on GitHub. It did find several ordinary
-security defects, all of which are fixed here. See `CHANGELOG.md` for the specifics
-and `tasks/security-hardening-fork/data/` for the full audit trail.
+security defects, all of which are fixed here. See `CHANGELOG.md` for the specifics.
+The full audit trail (plan, decisions, and verification output) is kept in the maintainer's
+separate audit workspace rather than in this repository.
 
 This fork exists to carry those fixes, not because the upstream project is untrustworthy.
 Fixes are offered upstream; if they are merged, this fork should be retired in favour
