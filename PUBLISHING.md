@@ -22,6 +22,28 @@ which extension is which. For internal VSIX distribution this matters much less.
 
 ---
 
+## Git remotes
+
+The hardened code is on **`main`**. The clone's original remote was renamed `origin` -> `upstream`
+and its push URL disabled, so a stray `git push` cannot aim at the original author's repository.
+Upstream's exact 2.5.0 tree is still preserved as `upstream/main`, so the full audit diff remains
+one command:
+
+```bash
+git diff upstream/main..main
+```
+
+When you create your own GitHub repo for the fork, add it as `origin` and push:
+
+```bash
+git remote add origin https://github.com/<your-org>/dataset-lens-secure.git
+git push -u origin main
+```
+
+To pick up future upstream releases later: `git fetch upstream && git rebase upstream/main`.
+
+---
+
 ## Channel 1 — VSIX for Duke colleagues (works now)
 
 Build:
