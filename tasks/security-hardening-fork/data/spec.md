@@ -3,6 +3,7 @@
 **Owner:** Dylan Thibault (Duke / DCRI)
 **Date started:** 2026-08-12
 **Upstream:** `vikasgaddu1/dataset-lens` @ v2.5.0 (MIT), published as `elearnsas.dataset-lens`
+**Status:** Phases A-D complete; publishing blocked only on Dylan registering a publisher ID (D5/D12).
 **Goal:** Produce a hardened fork that Duke colleagues can install and trust, distributed both as a
 shareable `.vsix` for immediate internal use and as a public Marketplace listing.
 

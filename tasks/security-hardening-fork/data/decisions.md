@@ -193,3 +193,27 @@ fixed) whereas "secure" is an absolute claim no software should make about itsel
 recognisable word there. The `sas7bdat` custom-editor label stays plain "Dataset Lens" to match
 its sibling editors ("Dataset Lens - XPT", etc.).
 **Status:** Implemented.
+
+### D14 — CSV formula injection: considered, deliberately NOT changed
+**Decision:** Leave `exportCsv` in `src/WebviewPanel.ts` as-is. Documented as a known limitation
+rather than silently altering exported values.
+**Why:** The export does correct RFC 4180 quoting, but a cell whose value begins with `=`, `+`,
+`-` or `@` is interpreted as a formula when the CSV is opened in Excel — the classic CSV-injection
+issue. The usual mitigation (prefixing such cells with an apostrophe or a tab) **mutates the
+exported data**. For a clinical-data viewer whose entire purpose is faithful representation, an
+export that silently differs from the source is arguably a worse defect than the one it fixes,
+and it would surprise anyone diffing an export against the original dataset.
+The risk is also low here: it requires a malicious dataset *and* the user exporting it *and*
+opening the result in a spreadsheet that honours formulas, and modern Excel prompts before
+executing external content.
+**Recommendation for Dylan:** if exports are routinely opened in Excel, this is worth revisiting —
+the cleanest fix is an opt-in "sanitize for Excel" checkbox in the export UI, so the mutation is
+the user's explicit choice. Flagged rather than silently decided.
+**Status:** Open, deliberately deferred.
+
+### D15 — Reproducibility property preserved
+**Note:** The property that made upstream verifiable — committed `out/` reproduces exactly from
+`src/` via `npx tsc -p .` — still holds for this fork. Verified after all changes: `diff -r`
+between a clean rebuild and the committed `out/` is empty. Anyone can therefore repeat Dylan's
+original audit against this fork, which is the whole basis for asking colleagues to trust it.
+**Status:** Verified.
