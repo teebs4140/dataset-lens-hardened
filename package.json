@@ -1,5 +1,5 @@
 {
-  "name": "dataset-lens-secure",
+  "name": "dataset-lens-hardened",
   "displayName": "Dataset Lens (Hardened Fork)",
   "description": "Security-hardened fork of Dataset Lens. View, filter, and analyze SAS7BDAT, XPT (XPORT), CDISC Dataset-JSON, and R data files (.rds, .rdata) directly in VS Code. Fixes a code-execution bug in WHERE-clause handling and escapes untrusted dataset metadata.",
   "version": "2.6.0",
@@ -11,11 +11,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/REPLACE-ME-org/dataset-lens-secure"
+    "url": "https://github.com/teebs4140/dataset-lens-hardened"
   },
-  "homepage": "https://github.com/REPLACE-ME-org/dataset-lens-secure#readme",
+  "homepage": "https://github.com/teebs4140/dataset-lens-hardened#readme",
   "bugs": {
-    "url": "https://github.com/REPLACE-ME-org/dataset-lens-secure/issues"
+    "url": "https://github.com/teebs4140/dataset-lens-hardened/issues"
   },
   "license": "MIT",
   "engines": {

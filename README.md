@@ -30,7 +30,7 @@ A powerful VS Code extension for viewing and analyzing SAS7BDAT, XPT (XPORT), CD
 Install the `.vsix` your administrator distributed:
 
 ```
-code --install-extension dataset-lens-secure-<version>.vsix
+code --install-extension dataset-lens-hardened-<version>.vsix
 ```
 
 Or in VS Code: Extensions panel -> `...` menu -> **Install from VSIX...**

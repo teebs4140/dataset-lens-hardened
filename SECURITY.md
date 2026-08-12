@@ -43,7 +43,7 @@ Each release is distributed as a `.vsix` with a published SHA-256. To confirm th
 received is the file that was built:
 
 ```bash
-sha256sum dataset-lens-secure-<version>.vsix
+sha256sum dataset-lens-hardened-<version>.vsix
 ```
 
 Compare the result against the hash published with the release. To go further, rebuild from

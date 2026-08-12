@@ -39,3 +39,8 @@ test_data/*.sas7bdat
 # Environment and local settings
 .env
 settings.local.json
+
+# Maintainer-only release notes. Kept in the private audit workspace, not here:
+# it records internal distribution decisions and a local build hash that would be
+# meaningless (and misleading) to anyone reading the public repo.
+PUBLISHING.md

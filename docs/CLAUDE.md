@@ -30,49 +30,17 @@ npm run watch        # Watch mode for development
 
 ### Extension Publishing
 
-#### Prerequisites
-- **Marketplace publisher**: `elearnsas` (at https://marketplace.visualstudio.com/manage)
-- **GitHub repo**: `vikasgaddu1/dataset-lens` (personal account, not tied to any employer)
-- **PAT location**: `.env` file at repo root with `MSF_PAT=<token>` (gitignored, never commit)
-- **PAT scope**: Azure DevOps PAT with Marketplace → Manage (or Full access)
+**This is a fork.** Upstream's publishing instructions (publisher `elearnsas`, a PAT in a local
+`.env`, and an Azure DevOps org belonging to the original author) were removed from this file
+because following them from this repository would attempt to publish under someone else's
+publisher identity.
 
-#### Publishing workflow (full release)
+Do not publish from an automated session. Release steps for this fork are maintainer-only and are
+kept outside this repository. Agents working here should build and test (`npm run compile`,
+`npx vsce package`) but never run `vsce publish`, never create publisher accounts, and never write
+a Personal Access Token into any file in this repo.
 
-1. **Make your code changes** and verify they compile:
-   ```bash
-   npx tsc -p ./
-   ```
-
-2. **Bump version** in `package.json` (semver: patch/minor/major)
-
-3. **Update README.md** release notes section if user-facing changes
-
-4. **Commit and push to GitHub**:
-   ```bash
-   git add <files>
-   git commit -m "vX.Y.Z: <short description>"
-   git push
-   ```
-
-5. **Publish to VS Code Marketplace** (reads PAT from `.env`):
-   ```bash
-   source .env && npx @vscode/vsce publish -p "$MSF_PAT"
-   ```
-
-   This runs `npm run vscode:prepublish` (compiles TypeScript) then uploads the VSIX.
-
-#### Important rules
-- **NEVER commit `.env`** — it's in `.gitignore`. The PAT must only exist locally.
-- **NEVER echo or print `$MSF_PAT`** in any output.
-- **Author identity**: All commits must be authored by `vikasgaddu1 <134550183+vikasgaddu1@users.noreply.github.com>` — do NOT add `Co-Authored-By: Claude` trailers. This is a personal project and must show only the user as contributor.
-- **No argenx references**: Never reintroduce `argx-vgaddu`, `argenx`, or `vgaddu@argenx.com` anywhere in code, commits, or config. This project is explicitly separated from the user's employer.
-- **Version already exists?** `vsce` will fail with "version already exists" — bump the version and retry.
-- **Publisher change?** Update `package.json` → `publisher` field before publishing.
-
-#### Verifying after publish
-- Marketplace URL: https://marketplace.visualstudio.com/items?itemName=elearnsas.dataset-lens
-- Hub URL: https://marketplace.visualstudio.com/manage/publishers/elearnsas/extensions/dataset-lens/hub
-- It takes a few minutes for the listing to refresh publicly.
+See `NOTICE.md` for the fork's relationship to upstream and `SECURITY.md` for the threat model.
 
 ### Testing
 ```bash
