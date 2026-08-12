@@ -174,7 +174,7 @@ input is realistic) and rendered → raw tag absent, escaped form present.
 **Package hygiene:** `dataset-lens-secure-2.6.0.vsix`, 183 files, 1.76 MB. Contains no
 `tasks/`, `testing/`, `data/`, `.claude/`, or `__pycache__` entries, and no VirtualScrolling or
 `webview/` files. SHA-256
-`e53b8363893a2ec10c8a3c78fadae293d2b76e93b34b4ff8cd71f647c94f604e`.
+`1a3e26d1f5ddf636cd47e11240dde8692b99d8bb2f9ee7f52f5d3f241a688b90`.
 
 ### Not verified (honest gaps)
 - **No interactive VS Code run.** Everything above exercises the Python readers and the HTML

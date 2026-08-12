@@ -35,3 +35,6 @@ tasks/**
 python/__pycache__/**
 **/__pycache__/**
 *.pyc
+# Maintainer-only docs. PUBLISHING.md records this package's own SHA-256,
+# so shipping it inside the package would make that hash unverifiable.
+PUBLISHING.md

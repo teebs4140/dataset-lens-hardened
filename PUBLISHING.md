@@ -52,10 +52,11 @@ sha256sum dataset-lens-secure-2.6.0.vsix
 ```
 
 **Current build:** `dataset-lens-secure-2.6.0.vsix`
-SHA-256: `e53b8363893a2ec10c8a3c78fadae293d2b76e93b34b4ff8cd71f647c94f604e`
+SHA-256: `1a3e26d1f5ddf636cd47e11240dde8692b99d8bb2f9ee7f52f5d3f241a688b90`
 
-(That hash is for the build produced in this working tree. Re-hash after any rebuild —
-VSIX files embed timestamps, so a rebuild will not reproduce the same hash byte-for-byte.)
+(That hash is for the build produced in this working tree. Re-hash after any rebuild — VSIX
+files embed timestamps, so a rebuild will not reproduce the same hash byte-for-byte. This file
+is excluded from the package precisely so that recording the hash here cannot change it.)
 
 Note that colleagues still need Python 3 on their `PATH`; the extension provisions its own
 virtualenv on first use.
