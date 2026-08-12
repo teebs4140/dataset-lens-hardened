@@ -131,11 +131,22 @@ def get_data(file_path, start_row, num_rows, selected_vars='', where_clause=''):
         # Convert to records
         records = df_page.to_dict('records')
 
-        # Handle NaN values
+        # Normalise values that json.dumps cannot encode. Dates are the common
+        # case in XPT: any date-formatted variable comes back as datetime.date
+        # and previously crashed the whole data request. Mirrors sas_reader.py
+        # and r_reader.py.
         for record in records:
             for key, value in record.items():
                 if pd.isna(value):
                     record[key] = None
+                elif isinstance(value, (pd.Timestamp, pd.Period)):
+                    record[key] = str(value)
+                elif hasattr(value, 'isoformat'):
+                    record[key] = value.isoformat()
+                elif isinstance(value, bytes):
+                    record[key] = value.decode('utf-8', errors='ignore')
+                elif hasattr(value, 'item'):  # numpy scalar types
+                    record[key] = value.item()
 
         result = {
             'data': records,
