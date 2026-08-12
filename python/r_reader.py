@@ -8,6 +8,7 @@ import json
 import re
 from pathlib import Path
 import pandas as pd
+from dtype_utils import classify_dtype, is_text_dtype
 from typing import Dict, List, Any, Optional
 
 try:
@@ -71,21 +72,11 @@ class RDataReader:
         for col in self.column_names:
             col_dtype = self.df[col].dtype
 
-            # Determine type
-            if col_dtype == 'object':
-                var_type = 'character'
-            elif 'int' in str(col_dtype) or 'float' in str(col_dtype):
-                var_type = 'numeric'
-            elif 'datetime' in str(col_dtype) or 'date' in str(col_dtype):
-                var_type = 'date'
-            elif 'bool' in str(col_dtype):
-                var_type = 'logical'
-            else:
-                var_type = 'numeric'
+            var_type = classify_dtype(col_dtype)
 
             # Calculate length for string columns
             col_length = None
-            if col_dtype == 'object':
+            if is_text_dtype(col_dtype):
                 max_len = self.df[col].astype(str).str.len().max()
                 col_length = int(max_len) if pd.notna(max_len) else None
 

@@ -7,6 +7,7 @@ import sys
 import json
 from pathlib import Path
 import pandas as pd
+from dtype_utils import classify_dtype, is_text_dtype
 
 try:
     import pyreadstat
@@ -38,8 +39,7 @@ def get_metadata(file_path):
                     # Some versions use original_variable_types
                     var_type = meta.original_variable_types[col]
                 elif df is not None and col in df.columns:
-                    dtype = str(df[col].dtype)
-                    var_type = 'character' if dtype == 'object' else 'numeric'
+                    var_type = classify_dtype(df[col].dtype)
 
                 # Get label from metadata if available
                 label = meta.column_labels[i] if meta.column_labels and i < len(meta.column_labels) else col
@@ -71,7 +71,7 @@ def get_metadata(file_path):
             variables = []
             for col in df.columns:
                 dtype = str(df[col].dtype)
-                var_type = 'character' if dtype == 'object' else 'numeric'
+                var_type = classify_dtype(df[col].dtype)
 
                 variables.append({
                     'name': col,

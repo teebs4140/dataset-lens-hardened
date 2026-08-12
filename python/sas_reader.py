@@ -3,6 +3,7 @@ import sys
 import os
 import re
 import pandas as pd
+from dtype_utils import classify_dtype, is_text_dtype
 import pyreadstat
 from typing import Dict, List, Any, Optional, Tuple
 
@@ -28,10 +29,7 @@ class SASReader:
                 self.column_formats = self.meta.original_variable_types or {}
                 # Create variable types mapping
                 for col in self.df.columns:
-                    if self.df[col].dtype == 'object':
-                        self.variable_types[col] = 'character'
-                    else:
-                        self.variable_types[col] = 'numeric'
+                    self.variable_types[col] = classify_dtype(self.df[col].dtype)
 
             return True
         except Exception as e:
@@ -49,7 +47,7 @@ class SASReader:
             col_length = None
 
             # Calculate length for string columns
-            if col_dtype == 'object':
+            if is_text_dtype(col_dtype):
                 max_len = self.df[col].astype(str).str.len().max()
                 col_length = int(max_len) if pd.notna(max_len) else None
 

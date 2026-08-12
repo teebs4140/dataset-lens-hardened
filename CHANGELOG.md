@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.6.1
+
+### Fixed — every character column was reported as numeric
+
+All three Python readers decided whether a column held text by testing
+`dtype == 'object'`. That held when pandas represented strings as object arrays, but current pandas
+(and the frames pyreadr/pyreadstat return) use a dedicated string dtype, so the comparison silently
+failed and each character column fell through to the numeric branch. The viewer showed the numeric
+icon and the wrong type in the Variable Metadata panel, and string lengths were never computed.
+Most visible on R files, which always go through Python.
+
+Classification now lives in `python/dtype_utils.py`, shared by all three readers so they cannot
+drift apart, and recognises `object`, `str`, and `string[...]` dtypes as text. Found by adding R
+test data.
+
 ## 2.6.0 — security-hardening fork of upstream 2.5.0
 
 Forked from [vikasgaddu1/dataset-lens](https://github.com/vikasgaddu1/dataset-lens) 2.5.0.
