@@ -3,7 +3,7 @@
   "displayName": "Dataset Lens (Hardened Fork)",
   "description": "Security-hardened fork of Dataset Lens. View, filter, and analyze SAS7BDAT, XPT (XPORT), CDISC Dataset-JSON, and R data files (.rds, .rdata) directly in VS Code. Fixes a code-execution bug in WHERE-clause handling and escapes untrusted dataset metadata.",
   "version": "2.6.0",
-  "publisher": "REPLACE-ME-publisher",
+  "publisher": "dcri-biostats",
   "icon": "icon.png",
   "galleryBanner": {
     "color": "#1e3a5f",
